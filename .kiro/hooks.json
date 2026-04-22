@@ -2,7 +2,7 @@
   "hooks": [
     {
       "name": "Spec compliance on TypeScript save",
-      "description": "Runs the Kiro spec check whenever TypeScript source or test files are saved.",
+      "description": "Runs the local spec compliance check whenever TypeScript source or test files are saved.",
       "event": "onSave",
       "include": [
         "src/**/*.ts",
@@ -11,7 +11,7 @@
       "actions": [
         {
           "type": "command",
-          "command": "kiro test --check-spec requirements.md"
+          "command": "npm run check:spec"
         }
       ]
     }
