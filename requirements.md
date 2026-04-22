@@ -213,4 +213,4 @@ WHEN the selected term is not allowed for the selected plan type, THE SYSTEM SHA
 - HTTP tests must cover a valid approved request, a rejected request, and validation failure.
 - Jest coverage must be at least 80 percent globally.
 - Docker Compose must expose the service on port `3000`.
-- Kiro must run a spec check on save for TypeScript files using `kiro test --check-spec requirements.md`.
+- Kiro must run a spec check on save for TypeScript files. In this repository the hook uses `npm run check:spec`, because Kiro CLI 2.0.1 does not expose `kiro test --check-spec requirements.md`.

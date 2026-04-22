@@ -123,6 +123,7 @@ Nota: Kiro CLI 2.0.1 no expone el subcomando `test --check-spec`. Por eso este p
 ## 5. Archivos Importantes
 
 - `requirements.md`: fuente de verdad de requisitos, reglas RB, contrato API y criterios de aceptacion.
+- `system-spec.md`: entrada de compatibilidad para herramientas que esperen ese nombre; remite a `requirements.md`.
 - `src/domain/policies/swiftLendPolicy.ts`: constantes de negocio auditables.
 - `src/domain/services/riskPolicyService.ts`: evaluacion de riesgo y reglas de rechazo.
 - `src/domain/services/repaymentPlanService.ts`: calculo de interes simple y plan de pagos.

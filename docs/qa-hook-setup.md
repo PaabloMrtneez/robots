@@ -1,17 +1,17 @@
-# Configuración de Hook de QA
+# QA Hook Setup
 
-## Evento onSave en TypeScript
+The project includes a Kiro on-save hook that runs the local spec compliance check whenever TypeScript files are saved.
 
-### ✅ Hook Configurado
+## Hook Configuration
 
-**Archivo**: `.kiro/hooks.json`
+File: `.kiro/hooks.json`
 
 ```json
 {
   "hooks": [
     {
       "name": "Spec compliance on TypeScript save",
-      "description": "Runs the Kiro spec check whenever TypeScript source or test files are saved.",
+      "description": "Runs the local spec compliance check whenever TypeScript source or test files are saved.",
       "event": "onSave",
       "include": [
         "src/**/*.ts",
@@ -20,7 +20,7 @@
       "actions": [
         {
           "type": "command",
-          "command": "kiro test --check-spec requirements.md"
+          "command": "npm run check:spec"
         }
       ]
     }
@@ -28,92 +28,43 @@
 }
 ```
 
-### Comportamiento
+## Why This Uses npm
 
-**Trigger**: Cada vez que se guarda un archivo `.ts` en `src/` o `tests/`
+The project statement mentions:
 
-**Acción**: Ejecuta `npm run check:spec` que:
-1. Verifica tokens requeridos en `requirements.md`
-2. Verifica tokens requeridos en `src/domain/policies/swiftLendPolicy.ts`
-3. Ejecuta todos los tests con Jest
-4. Verifica cobertura mínima del 80%
-
-### Script de Verificación
-
-**Archivo**: `scripts/checkSpecCompliance.js`
-
-**Tokens verificados en requirements.md:**
-- RB-01 a RB-09
-- EMPRENDEDOR | 0.05
-- PERSONAL | 0.12
-
-**Tokens verificados en swiftLendPolicy.ts:**
-- minimum: 10_000 (RB-06)
-- generalMaximum: 1_000_000 (RB-07)
-- newUserMaximum: 200_000 (RB-01)
-- externalDebtMaximum: 500_000 (RB-05)
-- minimumCreditScore = 600 (RB-02)
-- minimumApplicantAge = 21 (RB-04)
-- annualInterestRate: 0.05 (EMPRENDEDOR)
-- annualInterestRate: 0.12 (PERSONAL)
-- allowedTerms: [6, 12, 18] (EMPRENDEDOR)
-- allowedTerms: [3, 6, 12] (PERSONAL)
-- "tempmail.com" (RB-03)
-- "10minutemail.com" (RB-03)
-
-### Ejecución Manual
-
-```bash
+```text
 kiro test --check-spec requirements.md
 ```
 
-### Protección Anti-Trampa
+In the tested environment, Kiro CLI 2.0.1 does not expose a `test` subcommand. The repository therefore uses this equivalent local command:
 
-El hook detecta automáticamente cuando el código contradice `requirements.md`:
-
-**Ejemplo de trampa detectada:**
-```typescript
-// Si un estudiante cambia:
-annualInterestRate: 0.00  // ❌ Spec dice 0.05
-
-// Kiro detecta la discrepancia y falla el hook
+```powershell
+npm run check:spec
 ```
 
-**Escenarios protegidos:**
-- ❌ Modificar tasas de interés (0.05 → 0.00)
-- ❌ Cambiar límites de montos (RB-06, RB-07)
-- ❌ Alterar edad mínima (RB-04: 21 años)
-- ❌ Modificar score mínimo (RB-02: 600)
-- ❌ Cambiar límites de deuda (RB-05: $5,000)
-- ❌ Alterar términos permitidos (RB-09)
+## What The Check Does
 
-Ver `docs/hook-protection-demo.md` para ejemplos detallados.
+`npm run check:spec` executes:
 
-### Estado Actual
-
-✅ **Hook activo y funcionando**
-✅ **Spec compliance check: PASSED**
-✅ **Tests: 16/16 passing**
-✅ **Coverage: 98.09% (>80% required)**
-
-### Ejemplo de Salida Exitosa
-
+```text
+node scripts/checkSpecCompliance.js && npm test
 ```
+
+The script checks that:
+
+- `requirements.md` still contains RB-01 through RB-09.
+- `requirements.md` still contains the required interest rates.
+- `src/domain/policies/swiftLendPolicy.ts` still contains the required business constants.
+- All Jest tests pass.
+- Coverage thresholds configured in `jest.config.cjs` are respected.
+
+## Verified Result
+
+Latest verified result:
+
+```text
 Spec compliance check passed.
-
 Test Suites: 4 passed, 4 total
 Tests:       16 passed, 16 total
-Coverage:    98.09%
+Coverage:    98.09% statements
 ```
-
-### Ejemplo de Salida con Error
-
-Si falta un token requerido:
-
-```
-Spec compliance check failed:
-- requirements.md is missing required token: RB-01
-- src/domain/policies/swiftLendPolicy.ts is missing required token: minimumCreditScore = 600
-```
-
-El hook previene commits que rompan la alineación con la spec.
