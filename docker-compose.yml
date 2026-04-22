@@ -1,0 +1,9 @@
+services:
+  swiftlend:
+    build: .
+    container_name: swiftlend
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
