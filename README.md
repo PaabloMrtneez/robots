@@ -2,6 +2,14 @@
 
 SwiftLend es un microservicio Node.js/TypeScript para automatizar la aprobacion de microcreditos. El proyecto esta preparado para una entrega de tipo spec-to-code: la especificacion vive en `requirements.md`, el codigo implementa esas reglas con arquitectura limpia, y la calidad se valida con tests, Docker y un hook de QA.
 
+## Creadores
+
+- Pablo Martinez
+- Alvaro Hernandez
+- Adrian Tamargo
+- Adrian Francino
+- Firas Sabea
+
 ## 1. Objetivo Del Proyecto
 
 El objetivo es simular un flujo profesional donde el codigo no nace de instrucciones informales, sino de documentos tecnicos y reglas de negocio extraidas por IA.
@@ -199,6 +207,13 @@ cd C:\Users\pablo\Desktop\Practicas\robots
 npm install
 ```
 
+Resultado satisfactorio obtenido en la practica:
+
+```text
+added 393 packages
+found 0 vulnerabilities
+```
+
 ## 10. Comandos Disponibles
 
 ```powershell
@@ -237,7 +252,187 @@ npm run lint
 
 Ejecuta TypeScript sin emitir archivos.
 
-## 11. Ejecucion Local Sin Docker
+## 11. Tutorial De Ejecucion Y Pruebas
+
+Esta seccion resume el flujo completo que se debe seguir para instalar, ejecutar y comprobar el proyecto igual que en la practica.
+
+### Paso 1: Entrar En La Carpeta Del Proyecto
+
+```powershell
+cd C:\Users\pablo\Desktop\Practicas\robots
+```
+
+### Paso 2: Instalar Dependencias
+
+```powershell
+npm install
+```
+
+Resultado esperado:
+
+```text
+found 0 vulnerabilities
+```
+
+### Paso 3: Compilar El Proyecto
+
+```powershell
+npm run build
+```
+
+Resultado satisfactorio obtenido:
+
+```text
+> swiftlend@1.0.0 build
+> tsc -p tsconfig.build.json
+```
+
+El comando termino correctamente sin errores de TypeScript.
+
+### Paso 4: Ejecutar Tests Y Cobertura
+
+```powershell
+npm test
+```
+
+Resultado satisfactorio obtenido:
+
+```text
+Test Suites: 4 passed, 4 total
+Tests:       16 passed, 16 total
+Coverage:    98.09% statements, 92.3% branches, 94.73% functions, 98.09% lines
+```
+
+Este resultado supera el requisito de cobertura minima del 80%.
+
+### Paso 5: Ejecutar La Verificacion Contra La Spec
+
+```powershell
+npm run check:spec
+```
+
+Este comando ejecuta:
+
+- `scripts/checkSpecCompliance.js`.
+- Los tests con Jest.
+- La comprobacion de que las reglas criticas siguen alineadas con `requirements.md`.
+
+Resultado satisfactorio obtenido:
+
+```text
+Spec compliance check passed.
+Test Suites: 4 passed, 4 total
+Tests:       16 passed, 16 total
+```
+
+### Paso 6: Levantar El Servicio Con Docker
+
+```powershell
+docker compose up -d --build
+```
+
+Resultado satisfactorio obtenido:
+
+```text
+Container swiftlend Started
+```
+
+### Paso 7: Probar El Endpoint De Salud
+
+```powershell
+Invoke-RestMethod http://localhost:3000/health
+```
+
+Resultado satisfactorio obtenido:
+
+```powershell
+status service
+------ -------
+ok     swiftlend
+```
+
+### Paso 8: Probar Una Solicitud Aprobada
+
+```powershell
+$body = @{
+  userId = "6a79cb91-2e46-4de2-a47c-73240f037211"
+  email = "founder@company.com"
+  birthDate = "1990-05-10"
+  creditScore = 720
+  externalDebtCents = 100000
+  isNewUser = $true
+  amountCents = 150000
+  planType = "EMPRENDEDOR"
+  termMonths = 12
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri http://localhost:3000/loans/applications `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+Resultado esperado:
+
+```text
+decision.status = APPROVED
+loan.interestRate = 0.05
+repaymentPlan.interestCents = 7500
+repaymentPlan.totalRepaymentCents = 157500
+repaymentPlan.monthlyPaymentCents = 13125
+```
+
+### Paso 9: Probar Una Solicitud Rechazada
+
+```powershell
+$body = @{
+  userId = "6a79cb91-2e46-4de2-a47c-73240f037211"
+  email = "person@10minutemail.com"
+  birthDate = "2010-04-22"
+  creditScore = 599
+  externalDebtCents = 500001
+  isNewUser = $true
+  amountCents = 250000
+  planType = "EMPRENDEDOR"
+  termMonths = 12
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri http://localhost:3000/loans/applications `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+Resultado esperado:
+
+```text
+decision.status = REJECTED
+decision.reasons incluye:
+- NEW_USER_AMOUNT_LIMIT
+- LOW_CREDIT_SCORE
+- TEMP_EMAIL_DOMAIN
+- UNDERAGE
+- EXTERNAL_DEBT_TOO_HIGH
+
+repaymentPlan = null
+```
+
+### Paso 10: Apagar Docker
+
+```powershell
+docker compose down
+```
+
+Resultado satisfactorio obtenido:
+
+```text
+Container swiftlend Removed
+Network robots_default Removed
+```
+
+## 12. Ejecucion Local Sin Docker
 
 En una terminal:
 
@@ -259,7 +454,7 @@ status service
 ok     swiftlend
 ```
 
-## 12. Ejecucion Con Docker
+## 13. Ejecucion Con Docker
 
 Construir y levantar:
 
@@ -291,7 +486,7 @@ Apagar:
 docker compose down
 ```
 
-## 13. API
+## 14. API
 
 Base URL local:
 
@@ -411,7 +606,7 @@ Respuesta esperada:
 }
 ```
 
-## 14. Tests Y Cobertura
+## 15. Tests Y Cobertura
 
 Ejecutar:
 
@@ -433,7 +628,7 @@ Mapa de tests:
 - RB-06 a RB-08 validacion HTTP: `tests/interfaces/loanApplicationsApi.test.ts`.
 - Adaptadores de infraestructura: `tests/infrastructure/systemAdapters.test.ts`.
 
-## 15. Hook De QA
+## 16. Hook De QA
 
 Archivo:
 
@@ -479,7 +674,7 @@ Ejecutar manualmente:
 npm run check:spec
 ```
 
-## 16. Flujo NotebookLM
+## 17. Flujo NotebookLM
 
 1. Abrir NotebookLM.
 2. Crear un notebook llamado `SwiftLend Spec-to-Code`.
@@ -500,7 +695,7 @@ npm run check:spec
    - `EMPRENDEDOR`: 5%.
    - `PERSONAL`: 12%.
 
-## 17. Flujo Kiro
+## 18. Flujo Kiro
 
 1. Abrir Kiro.
 2. Seleccionar `Open Folder`.
@@ -542,7 +737,7 @@ docs/prompts/kiro-audit-prompt.md
 Actualiza audit-report.md con el resultado final de la auditoria, incluyendo trazabilidad entre requirements.md, RB-01 a RB-09, archivos de implementacion y tests.
 ```
 
-## 18. Auditoria
+## 19. Auditoria
 
 El archivo `audit-report.md` resume:
 
@@ -565,7 +760,7 @@ Invoke-RestMethod http://localhost:3000/health
 docker compose down
 ```
 
-## 19. Solucion De Problemas
+## 20. Solucion De Problemas
 
 ### `get http://localhost:3000/health` no funciona
 
@@ -630,7 +825,7 @@ Apaga Docker si el contenedor esta activo:
 docker compose down
 ```
 
-## 20. Estado Actual Verificado
+## 21. Estado Actual Verificado
 
 - `npm install`: correcto.
 - `npm run build`: correcto.
@@ -641,8 +836,11 @@ docker compose down
 - Tests: 16/16 pasando.
 - Cobertura global: 98.09%.
 - Servicio: `http://localhost:3000`.
+- Health check obtenido: `status = ok`, `service = swiftlend`.
+- Hook de QA configurado con `npm run check:spec`.
+- Auditoria disponible en `audit-report.md`.
 
-## 21. Entregables
+## 22. Entregables
 
 Para evaluacion, el repositorio contiene:
 
